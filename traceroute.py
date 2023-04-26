@@ -158,7 +158,7 @@ def get_route(hostname):
 
                 t= time.time() #record current time
                 startedSelect = time.time() #record current time in sep variable
-
+                timeLeft = timeLeft - (time.time() - startedSelect)
                 #select.select function is used to monitor multiple sockets and wait for specific events,
                 # such as data becoming available for reading or a socket becoming ready for writing.
                 # It can be used to implement timeouts or to handle multiple connections simultaneously.
