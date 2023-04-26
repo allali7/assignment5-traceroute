@@ -89,11 +89,6 @@ def get_route(hostname):
         # specified by the TRIES constant. If a response is not
         # received within the given TIMEOUT, the script will retry
         # sending the ICMP packet up to TRIES times.
-        icmp = getprotobyname("icmp")  # Get the protocol number for ICMP
-        mySocket = socket(AF_INET, SOCK_RAW, icmp)  # Create a raw socket for ICMP
-        myID = os.getpid() & 0xFFFF
-        mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
-        mySocket.settimeout(TIMEOUT)  # if the socket doesn't receive any data within the
         for tries in range(TRIES):
 
             # Fill in start
@@ -115,7 +110,9 @@ def get_route(hostname):
             # set the TTL value for the current iteration. This is necessary because the
             # TTL value changes with each iteration, and we want to make sure that the
             # correct TTL is set for the packet being sent.
-
+            icmp = getprotobyname("icmp")  # Get the protocol number for ICMP
+            mySocket = socket(AF_INET, SOCK_RAW, icmp)  # Create a raw socket for ICMP
+            #myID = os.getpid() & 0xFFFF
 
             # Fill in end
             # By using mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl)),
@@ -137,7 +134,8 @@ def get_route(hostname):
             # struct.pack('I', ttl): This part of the code packs the TTL value (ttl) as
             # an unsigned integer ('I') using the struct module. The packed TTL value
             # will be passed as the option value for the IP_TTL option.
-
+            mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
+            mySocket.settimeout(TIMEOUT)  # if the socket doesn't receive any data within the
             # specified timeout period, it will raise a timeout exception.
 
             # sends the ICMP packet and waits for a response. If the socket times out, it will raise an exception
@@ -155,7 +153,10 @@ def get_route(hostname):
 
                 t = time.time()  # record current time
                 startedSelect = time.time()  # record current time in sep variable
-                timeLeft = timeLeft - (time.time() - startedSelect)
+                whatReady = select.select([mySocket], [], [],
+                                          timeLeft)  # Waits for the socket to be ready for reading or until the timeLeft expires.
+                ###testing mught need back#  timeLeft = timeLeft - (time.time() - startedSelect)
+
                 # select.select function is used to monitor multiple sockets and wait for specific events,
                 # such as data becoming available for reading or a socket becoming ready for writing.
                 # It can be used to implement timeouts or to handle multiple connections simultaneously.
@@ -178,8 +179,7 @@ def get_route(hostname):
                 # The line whatReady = select.select([mySocket], [], [], timeLeft) assigns the returned value
                 # (the list of sockets that are readable) to the variable whatReady. If whatReady[0] == [], it means
                 # the timeout has expired, and no data is available to read from mySocket.
-                whatReady = select.select([mySocket], [], [],
-                                          timeLeft)  # Waits for the socket to be ready for reading or until the timeLeft expires.
+                #whatReady = select.select([mySocket], [], [],timeLeft)  # Waits for the socket to be ready for reading or until the timeLeft expires.
                 howLongInSelect = (
                             time.time() - startedSelect)  # Calculates the time spent waiting for the socket to become ready
 
