@@ -115,6 +115,7 @@ def get_route(hostname):
             # set the TTL value for the current iteration. This is necessary because the
             # TTL value changes with each iteration, and we want to make sure that the
             # correct TTL is set for the packet being sent.
+            timeLeft=TIMEOUT
             icmp = getprotobyname("icmp")  # Get the protocol number for ICMP
             mySocket = socket(AF_INET, SOCK_RAW, icmp)  # Create a raw socket for ICMP
             myID = os.getpid() & 0xFFFF
@@ -158,7 +159,7 @@ def get_route(hostname):
 
                 t= time.time() #record current time
                 startedSelect = time.time() #record current time in sep variable
-                timeLeft = timeLeft - (time.time() - startedSelect)
+
                 #select.select function is used to monitor multiple sockets and wait for specific events,
                 # such as data becoming available for reading or a socket becoming ready for writing.
                 # It can be used to implement timeouts or to handle multiple connections simultaneously.
@@ -307,4 +308,4 @@ def get_route(hostname):
     return df
 
 if __name__ == '__main__':
-    get_route("google.co.il")
+    get_route("google.com")
