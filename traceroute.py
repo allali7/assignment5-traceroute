@@ -89,6 +89,11 @@ def get_route(hostname):
         # specified by the TRIES constant. If a response is not
         # received within the given TIMEOUT, the script will retry
         # sending the ICMP packet up to TRIES times.
+        icmp = getprotobyname("icmp")  # Get the protocol number for ICMP
+        mySocket = socket(AF_INET, SOCK_RAW, icmp)  # Create a raw socket for ICMP
+        myID = os.getpid() & 0xFFFF
+        mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
+        mySocket.settimeout(TIMEOUT)  # if the socket doesn't receive any data within the
         for tries in range(TRIES):
 
             # Fill in start
@@ -110,9 +115,7 @@ def get_route(hostname):
             # set the TTL value for the current iteration. This is necessary because the
             # TTL value changes with each iteration, and we want to make sure that the
             # correct TTL is set for the packet being sent.
-            icmp = getprotobyname("icmp")  # Get the protocol number for ICMP
-            mySocket = socket(AF_INET, SOCK_RAW, icmp)  # Create a raw socket for ICMP
-            myID = os.getpid() & 0xFFFF
+
 
             # Fill in end
             # By using mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl)),
@@ -134,8 +137,7 @@ def get_route(hostname):
             # struct.pack('I', ttl): This part of the code packs the TTL value (ttl) as
             # an unsigned integer ('I') using the struct module. The packed TTL value
             # will be passed as the option value for the IP_TTL option.
-            mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
-            mySocket.settimeout(TIMEOUT)  # if the socket doesn't receive any data within the
+
             # specified timeout period, it will raise a timeout exception.
 
             # sends the ICMP packet and waits for a response. If the socket times out, it will raise an exception
