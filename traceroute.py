@@ -89,7 +89,8 @@ def get_route(hostname):
         # specified by the TRIES constant. If a response is not
         # received within the given TIMEOUT, the script will retry
         # sending the ICMP packet up to TRIES times.
-        for tries in range(TRIES):
+        #for tries in range(TRIES):
+        for tries in range(1, TRIES + 1):
 
             # Fill in start
             # Make a raw socket named mySocket
@@ -188,9 +189,9 @@ def get_route(hostname):
                 if whatReady[0] == []:  # Timeout of select.select
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    df = df.concat({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
                                     'Response Code': "Timeout"}, ignore_index=True)
-                    print(df)
+                    #(df)
                     # Fill in end
 
                 # If the select.select() did not timeout, this line receives the packet and its source address.
@@ -198,7 +199,7 @@ def get_route(hostname):
                 recvPacket, addr = mySocket.recvfrom(1024)  # addr is a tuple oof ip addr and socket
                 timeReceived = time.time()  # packet recieved time
                 timeLeft = timeLeft - howLongInSelect  # updates the timeLeft variable by subtracting the time spent in the select.select() function.
-                timeLeft = max(0, timeLeft)
+                #timeLeft = max(0, timeLeft)
                 # If timeLeft is exhausted, the following block of code appends a new row to the df DataFrame,
                 # similar to the first case when a timeout occurred.
                 # difference between whatready and timeleft timouts. whatReady timeout checks whether the select.select()
@@ -211,12 +212,12 @@ def get_route(hostname):
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required
                     # by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    df = df.concat({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
                                     'Response Code': "Timeout"}, ignore_index=True)
-                    print(df)
+                    #print(df)
                     # Fill in end
             except Exception as e:
-                print(e)  # uncomment to view exceptions
+                #print(e)  # uncomment to view exceptions
                 # continue statement ensures that the program does not terminate
                 # due to the error. Instead, it will move on to the next try in the inner loop
                 continue  # inner loop if timeout
@@ -257,7 +258,7 @@ def get_route(hostname):
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
 
-                    df = df.append({
+                    df = df.concat({
                         'Hop Count': ttl,
                         'Try': tries,
                         'IP': addr[0],
@@ -271,7 +272,7 @@ def get_route(hostname):
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
 
-                    df = df.append({
+                    df = df.concat({
                         'Hop Count': ttl,
                         'Try': tries,
                         'IP': addr[0],
@@ -284,7 +285,7 @@ def get_route(hostname):
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
 
-                    df = df.append({
+                    df = df.concat({
                         'Hop Count': ttl,
                         'Try': tries,
                         'IP': addr[0],
@@ -295,7 +296,7 @@ def get_route(hostname):
                 else:
                     # Fill in start
                     # If there is an exception/error to your if statements, you should append that to your df here
-                    df = df.append({
+                    df = df.concat({
                         'Hop Count': ttl,
                         'Try': tries,
                         'IP': addr[0],
