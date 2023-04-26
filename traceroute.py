@@ -13,10 +13,6 @@ TIMEOUT = 2.0
 TRIES = 1
 
 
-# The packet that we shall send to each router along the path is the ICMP echo
-# request packet, which is exactly what we had used in the ICMP ping exercise.
-# We shall use the same packet that we built in the Ping exercise
-
 def checksum(string):
     # In this function we make the checksum of our packet
     csum = 0
@@ -73,6 +69,7 @@ def build_packet():
 
 
 def get_route(hostname):
+    # print("hello")
     timeLeft = TIMEOUT
     df = pd.DataFrame(columns=['Hop Count', 'Try', 'IP', 'Hostname', 'Response Code'])
     destAddr = gethostbyname(hostname)
@@ -116,25 +113,7 @@ def get_route(hostname):
             #myID = os.getpid() & 0xFFFF
 
             # Fill in end
-            # By using mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl)),
-            # the code sets the TTL value for the IP packets sent using the mySocket
-            # object. As the ttl value increases in the for ttl in range(1,MAX_HOPS):
-            # loop, the ICMP packets will be able to traverse more hops (routers) before
-            # being discarded. This is a crucial part of the traceroute process, as it
-            # allows the program to discover each intermediate router in the path to the destination.
 
-            # IPPROTO_IP: This constant represents the IP protocol level.
-            # It is used to indicate that the option you're setting is related to the IP protocol.
-
-            # IP_TTL: This constant represents the Time-To-Live (TTL) option for the IP protocol.
-            # TTL is a value that determines the maximum number of routers (hops) a packe
-            # t can traverse before being discarded. Each time a router processes the packet,
-            # it decrements the TTL value by 1. When the TTL value reaches 0, the packet is
-            # discarded, and the router sends an ICMP Time Exceeded message back to the sender.
-
-            # struct.pack('I', ttl): This part of the code packs the TTL value (ttl) as
-            # an unsigned integer ('I') using the struct module. The packed TTL value
-            # will be passed as the option value for the IP_TTL option.
             mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', ttl))
             mySocket.settimeout(TIMEOUT)  # if the socket doesn't receive any data within the
             # specified timeout period, it will raise a timeout exception.
@@ -142,69 +121,43 @@ def get_route(hostname):
             # sends the ICMP packet and waits for a response. If the socket times out, it will raise an exception
             try:
                 d = build_packet()  # function to create an ICMP packet
-                # the 0 is used as a placeholder for the port number. Since you are using ICMP,
-                # which is a connectionless protocol and operates on the network layer, it
-                # does not use port numbers like TCP or UDP, which operate on the transport layer.
-                # When sending an ICMP packet using a raw socket, the operating system does
-                # not expect a port number. However, the sendto() function requires a tuple
-                # containing an IP address and a port number as the destination address.
-                # By providing 0 as the port number, you satisfy the function's argument requirements
-                # without actually specifying a meaningful port number, because ICMP doesn't use ports.
+
                 mySocket.sendto(d, (hostname, 0))  # Sends the ICMP packet to the specified hostname
 
                 t = time.time()  # record current time
                 startedSelect = time.time()  # record current time in sep variable
                 whatReady = select.select([mySocket], [], [],
                                           timeLeft)  # Waits for the socket to be ready for reading or until the timeLeft expires.
-                ###testing mught need back#  timeLeft = timeLeft - (time.time() - startedSelect)
 
-                # select.select function is used to monitor multiple sockets and wait for specific events,
-                # such as data becoming available for reading or a socket becoming ready for writing.
-                # It can be used to implement timeouts or to handle multiple connections simultaneously.
-                # [mySocket]: This is a list of sockets to monitor for readability. In this case,
-                # it contains just one socket, mySocket. The function will check if there is any data
-                # available to read from this socket.
-                # []: This is an empty list, which would normally contain sockets to monitor for writability.
-                # Since we're not interested in monitoring any sockets for writability in this case, an empty list is
-                # provided.
-                # []: This is another empty list, which would normally contain sockets to monitor for exceptional
-                # conditions. Again, we're not interested in monitoring any sockets for exceptional conditions, so
-                # an empty list is provided.
-                # timeLeft: This is the timeout value, specified in seconds. The select.select() function will wait
-                # for the specified amount of time for any of the monitored events to occur. If the timeout expires
-                # and no events occur, the function will return.
-                # The select.select() function returns three lists: the sockets that are readable, the sockets that
-                # are writable, and the sockets with exceptional conditions. In this case, since we're only interested
-                # in monitoring mySocket for readability, the function will return a list containing mySocket if
-                # there is data available to read, or an empty list if the timeout expires and no data is available.
-                # The line whatReady = select.select([mySocket], [], [], timeLeft) assigns the returned value
-                # (the list of sockets that are readable) to the variable whatReady. If whatReady[0] == [], it means
-                # the timeout has expired, and no data is available to read from mySocket.
-                #whatReady = select.select([mySocket], [], [],timeLeft)  # Waits for the socket to be ready for reading or until the timeLeft expires.
+
                 howLongInSelect = (
                             time.time() - startedSelect)  # Calculates the time spent waiting for the socket to become ready
 
-                # If no response is received within the given timeout, a "Timeout" entry is appended to the DataFrame.
-                # checks if the select.select() function has timed out, meaning there is no data to read from the socket
+
                 if whatReady[0] == []:  # Timeout of select.select
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
-                                    'Response Code': "Timeout"}, ignore_index=True)
+                    # df = pd.concat({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    #                 'Response Code': "Timeout"}, ignore_index=True)
+
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': "Timeout",
+                            'Hostname': "Timeout",
+                            'Response Code': "Timeout"
+                        }, index=[0])
+                    ], ignore_index=True)
                     #(df)
                     # Fill in end
 
-                # If the select.select() did not timeout, this line receives the packet and its source address.
-                # The maximum packet size to be received is set to 1024 bytes.
+
                 recvPacket, addr = mySocket.recvfrom(1024)  # addr is a tuple oof ip addr and socket
                 timeReceived = time.time()  # packet recieved time
                 timeLeft = timeLeft - howLongInSelect  # updates the timeLeft variable by subtracting the time spent in the select.select() function.
-                #timeLeft = max(0, timeLeft)
-                # If timeLeft is exhausted, the following block of code appends a new row to the df DataFrame,
-                # similar to the first case when a timeout occurred.
-                # difference between whatready and timeleft timouts. whatReady timeout checks whether the select.select()
-                # function has timed out waiting for a response from the router.
-                # timeLeft timeout checks whether the overall time for the process has exceeded the allowed TIMEOUT.
+                timeLeft = max(0, timeLeft)
+
                 if timeLeft <= 0:
                     # checks if there's no remaining time for the current loop iteration. If there's no time left,
                     # the program appends another row to the DataFrame with the 'Response Code' as 'Timeout'.
@@ -212,8 +165,18 @@ def get_route(hostname):
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required
                     # by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
-                                    'Response Code': "Timeout"}, ignore_index=True)
+                    # df = pd.concat({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    #                 'Response Code': "Timeout"}, ignore_index=True)
+
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': "Timeout",
+                            'Hostname': "Timeout",
+                            'Response Code': "Timeout"
+                        }, index=[0])
+                    ], ignore_index=True)
                     #print(df)
                     # Fill in end
             except Exception as e:
@@ -258,12 +221,16 @@ def get_route(hostname):
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
 
-                    df = df.append({
-                        'Hop Count': ttl,
-                        'Try': tries,
-                        'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '11'}, ignore_index=True)
+
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': addr[0],
+                            'Hostname': routerHostname,
+                            'Response Code': '11'
+                        }, index=[0])
+                    ], ignore_index=True)
 
                     # Fill in end
                 elif types == 3:
@@ -272,38 +239,51 @@ def get_route(hostname):
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
 
-                    df = df.append({
-                        'Hop Count': ttl,
-                        'Try': tries,
-                        'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '3'}, ignore_index=True)
+
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': addr[0],
+                            'Hostname': routerHostname,
+                            'Response Code': '3'
+                        }, index=[0])
+                    ], ignore_index=True)
                     # Fill in end
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     # Fill in start
                     # You should update your dataframe with the required column field responses here
+                    #
 
-                    df = df.append({
-                        'Hop Count': ttl,
-                        'Try': tries,
-                        'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '0'}, ignore_index=True)
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': addr[0],
+                            'Hostname': routerHostname,
+                            'Response Code': '0'
+                        }, index=[0])
+                    ], ignore_index=True)
                     # Fill in end
                     return df
                 else:
                     # Fill in start
                     # If there is an exception/error to your if statements, you should append that to your df here
-                    df = df.append({
-                        'Hop Count': ttl,
-                        'Try': tries,
-                        'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': "Timeout"}, ignore_index=True)
+                    df = pd.concat([
+                        pd.DataFrame({
+                            'Hop Count': ttl,
+                            'Try': tries,
+                            'IP': addr[0],
+                            'Hostname': routerHostname,
+                            'Response Code': "Timeout"
+                        }, index=[0])
+                    ], ignore_index=True)
+
                     # Fill in end
             break  # exit tires inner loop
+
     return df
 
 
