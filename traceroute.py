@@ -192,8 +192,8 @@ def get_route(hostname):
                 if whatReady[0] == []:  # Timeout of select.select
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "Timeout", 'Hostname': "Timeout",
-                                    'Response Code': "Timeout"}, ignore_index=True)
+                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "timeout", 'Hostname': "timeout",
+                                    'Response Code': "timeout"}, ignore_index=True)
                     #print('E')
                     #print(df)
                     # Fill in end
@@ -216,8 +216,8 @@ def get_route(hostname):
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required
                     # by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "Timeout", 'Hostname': "Timeout",
-                                    'Response Code': "Timeout"}, ignore_index=True)
+                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "timeout", 'Hostname': "timeout",
+                                    'Response Code': "timeout"}, ignore_index=True)
                     #print('F')
                     #print(df)
                     # Fill in end
@@ -313,7 +313,7 @@ def get_route(hostname):
                         'Try': tries +1,
                         'IP': addr[0],
                         'Hostname': rhostname,
-                        'Response Code': "Timeout"}, ignore_index=True)
+                        'Response Code': "timeout"}, ignore_index=True)
                     #print('k-else')
                     # Fill in end
                 break  # exit tires inner loop
