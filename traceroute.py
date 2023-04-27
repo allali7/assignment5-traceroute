@@ -217,7 +217,7 @@ def get_route(hostname):
                     print(df)
                     # Fill in end
             except Exception as e:
-                print(e)  # uncomment to view exceptions
+                #print(e)  # uncomment to view exceptions
                 # continue statement ensures that the program does not terminate
                 # due to the error. Instead, it will move on to the next try in the inner loop
                 continue  # inner loop if timeout
