@@ -333,7 +333,7 @@ def get_route(hostname):
                     return df
                     # Fill in end
                 break  # exit tires inner loop
-        return df
+    return df
 
 
 if __name__ == '__main__':
