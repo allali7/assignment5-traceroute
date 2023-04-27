@@ -1,4 +1,3 @@
-
 from socket import *
 import os
 import sys
@@ -74,6 +73,7 @@ def build_packet():
 
 
 def get_route(hostname):
+    #print('A')
     timeLeft = TIMEOUT
     df = pd.DataFrame(columns=['Hop Count', 'Try', 'IP', 'Hostname', 'Response Code'])
     destAddr = gethostbyname(hostname)
@@ -86,11 +86,13 @@ def get_route(hostname):
     # TTL is the maximum number of hops (routers) the packet
     # can pass through before being discarded.
     for ttl in range(1, MAX_HOPS):
+        #print('B')
         # This inner loop iterates over the number of tries
         # specified by the TRIES constant. If a response is not
         # received within the given TIMEOUT, the script will retry
         # sending the ICMP packet up to TRIES times.
-        for tries in range(1, TRIES + 1):
+        for tries in range(TRIES):
+            #print('C')
 
             # Fill in start
             # Make a raw socket named mySocket
@@ -186,12 +188,14 @@ def get_route(hostname):
 
                 # If no response is received within the given timeout, a "Timeout" entry is appended to the DataFrame.
                 # checks if the select.select() function has timed out, meaning there is no data to read from the socket
+                #print('D')
                 if whatReady[0] == []:  # Timeout of select.select
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "Timeout", 'Hostname': "Timeout",
                                     'Response Code': "Timeout"}, ignore_index=True)
-                    print(df)
+                    #print('E')
+                    #print(df)
                     # Fill in end
 
                 # If the select.select() did not timeout, this line receives the packet and its source address.
@@ -199,7 +203,7 @@ def get_route(hostname):
                 recvPacket, addr = mySocket.recvfrom(1024)  # addr is a tuple oof ip addr and socket
                 timeReceived = time.time()  # packet recieved time
                 timeLeft = timeLeft - howLongInSelect  # updates the timeLeft variable by subtracting the time spent in the select.select() function.
-                timeLeft = max(0, timeLeft)
+                #timeLeft = max(0, timeLeft)
                 # If timeLeft is exhausted, the following block of code appends a new row to the df DataFrame,
                 # similar to the first case when a timeout occurred.
                 # difference between whatready and timeleft timouts. whatReady timeout checks whether the select.select()
@@ -212,11 +216,13 @@ def get_route(hostname):
                     # Fill in start
                     # append response to your dataframe including hop #, try #, and "timeout" responses as required
                     # by the acceptance criteria
-                    df = df.append({'Hop Count': ttl, 'Try': tries, 'IP': "Timeout", 'Hostname': "Timeout",
+                    df = df.append({'Hop Count': ttl, 'Try': tries +1, 'IP': "Timeout", 'Hostname': "Timeout",
                                     'Response Code': "Timeout"}, ignore_index=True)
-                    print(df)
+                    #print('F')
+                    #print(df)
                     # Fill in end
             except Exception as e:
+                #print('G')
                 #print(e)  # uncomment to view exceptions
                 # continue statement ensures that the program does not terminate
                 # due to the error. Instead, it will move on to the next try in the inner loop
@@ -225,11 +231,12 @@ def get_route(hostname):
             else:  # this executes if there is no exception - try else just means continue of no exception here
                 # Fill in start
                 # Fetch the icmp type from the IP packet
+                #print('H')
 
-                icmp_header = recvPacket[20:28]  # Extract the ICMP header from the received packet
-                types, icmp_code, icmp_checksum, icmp_id, icmp_seq = struct.unpack("bbHHh",
-                                                                                   icmp_header)  # Unpack the ICMP header into its components
-
+                # icmp_header = recvPacket[20:28]  # Extract the ICMP header from the received packet
+                # types, icmp_code, icmp_checksum, icmp_id, icmp_seq = struct.unpack("bbHHh",
+                #                                                                    icmp_header)  # Unpack the ICMP header into its components
+                types, code = recvPacket[20], recvPacket[21]
                 # Fill in end
                 try:  # try to fetch the hostname of the router that returned the packet - don't confuse with the hostname that you are tracing
 
@@ -243,12 +250,13 @@ def get_route(hostname):
                     # the domain name associated with a given IP address.
                     # host = gethostbyaddr(str(srcIPstring))
                     host = gethostbyaddr(str(addr[0]))
-                    routerHostname = host[0]
-
+                    rhostname = host[0]
+                    #print('I')
                     # Fill in end
                 except herror:  # if the router host does not provide a hostname use "hostname not returnable"
                     # Fill in start
-                    routerHostname = "hostname not returnable"
+                    rhostname = "hostname not returnable"
+                    #print('J')
                 # Fill in end
 
                 if types == 11:
@@ -260,10 +268,11 @@ def get_route(hostname):
 
                     df = df.append({
                         'Hop Count': ttl,
-                        'Try': tries,
+                        'Try': tries +1,
                         'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '11'}, ignore_index=True)
+                        'Hostname': rhostname,
+                        'Response Code': types}, ignore_index=True)
+                    #print('k-11')
 
                     # Fill in end
                 elif types == 3:
@@ -274,10 +283,11 @@ def get_route(hostname):
 
                     df = df.append({
                         'Hop Count': ttl,
-                        'Try': tries,
+                        'Try': tries +1,
                         'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '3'}, ignore_index=True)
+                        'Hostname': rhostname,
+                        'Response Code': types}, ignore_index=True)
+                    #print('k-3')
                     # Fill in end
                 elif types == 0:
                     bytes = struct.calcsize("d")
@@ -287,25 +297,33 @@ def get_route(hostname):
 
                     df = df.append({
                         'Hop Count': ttl,
-                        'Try': tries,
+                        'Try': tries + 1,
                         'IP': addr[0],
-                        'Hostname': routerHostname,
-                        'Response Code': '0'}, ignore_index=True)
+                        'Hostname': rhostname,
+                        'Response Code': types}, ignore_index=True)
+                    #print('k-0')
                     # Fill in end
+                    print(df)
                     return df
                 else:
                     # Fill in start
                     # If there is an exception/error to your if statements, you should append that to your df here
                     df = df.append({
                         'Hop Count': ttl,
-                        'Try': tries,
+                        'Try': tries +1,
                         'IP': addr[0],
-                        'Hostname': routerHostname,
+                        'Hostname': rhostname,
                         'Response Code': "Timeout"}, ignore_index=True)
+                    #print('k-else')
                     # Fill in end
                 break  # exit tires inner loop
+                #print("after-break")
+            #print("loop1")
+       # print("loop2")
+    #print("loop3")
+    print(df)
     return df
 
 
 if __name__ == '__main__':
-    get_route("google.co.il")
+   get_route("google.co.il")
