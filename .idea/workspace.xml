@@ -32,7 +32,8 @@
   },
   "keyToStringList": {
     "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "Python"
+      "Python",
+      "PythonRegExp"
     ]
   }
 }]]></component>
